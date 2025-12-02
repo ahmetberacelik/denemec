@@ -1,4 +1,4 @@
-# Calculator Project Library Generation and Testing Template
+# Gymmanager Project Library Generation and Testing Template
 
 ## Overview
 
