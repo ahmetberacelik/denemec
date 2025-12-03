@@ -3,41 +3,67 @@
 #include "gtest/gtest.h"
 #include "../../gymmanager/header/gymmanager.h"  // Adjust this include path based on your project structure
 
-using namespace Coruh::Gymmanager;
-
 class GymmanagerTest : public ::testing::Test {
 protected:
-	void SetUp() override {
-		// Setup test data
-	}
+    const char* inputTest = "inputTest.txt";
+    const char* outputTest = "outputTest.txt";
+    void SetUp() override {
+        // Setup test data
+    }
 
-	void TearDown() override {
-		// Clean up test data
-	}
+    void TearDown() override {
+        remove(inputTest);
+        remove(outputTest);
+    }
+    void simulateUserInput(const char* userInput) {
+        FILE* fileinput = fopen(inputTest, "wb");
+        fputs(userInput, fileinput);
+        fclose(fileinput);
+        freopen(inputTest, "rb", stdin);
+        freopen(outputTest, "wb", stdout);
+    }
+
+    void readOutput(const char* outputFilePath, char* buffer, size_t bufferSize) {
+        FILE* fileoutput = fopen(outputFilePath, "rb");
+        size_t charsRead = fread(buffer, sizeof(char), bufferSize - 1, fileoutput);
+        fclose(fileoutput);
+        buffer[charsRead] = '\0';
+        removeClearScreenCharsFromOutputFile(buffer);
+    }
+
+    void resetStdinStdout() {
+        fclose(stdin);
+        fflush(stdout);
+#ifdef _WIN32
+        freopen("CON", "a", stdout);
+        freopen("CON", "r", stdin);
+#else
+        freopen("/dev/tty", "a", stdout);
+        freopen("/dev/tty", "r", stdin);
+#endif // _WIN32
+    }
+
+    void removeClearScreenCharsFromOutputFile(char* str) {
+        char* src = str;
+        char* dst = str;
+        while (*src) {
+            if (*src != '\f') {
+                *dst++ = *src;
+            }
+            src++;
+        }
+        *dst = '\0';
+    }
 };
 
-TEST_F(GymmanagerTest, TestAdd) {
-	double result = Gymmanager::add(5.0, 3.0);
-	EXPECT_DOUBLE_EQ(result, 8.0);
-}
+TEST_F(GymmanagerTest, UserAuthenticationTest) {
+    simulateUserInput("1\nAhmet Bera Celik\nqwerty\n100\n\n");
 
-TEST_F(GymmanagerTest, TestSubtract) {
-	double result = Gymmanager::subtract(5.0, 3.0);
-	EXPECT_DOUBLE_EQ(result, 2.0);
-}
+    bool result = userAuthentication2();
 
-TEST_F(GymmanagerTest, TestMultiply) {
-	double result = Gymmanager::multiply(5.0, 3.0);
-	EXPECT_DOUBLE_EQ(result, 15.0);
-}
+    resetStdinStdout();
 
-TEST_F(GymmanagerTest, TestDivide) {
-	double result = Gymmanager::divide(6.0, 3.0);
-	EXPECT_DOUBLE_EQ(result, 2.0);
-}
-
-TEST_F(GymmanagerTest, TestDivideByZero) {
-	EXPECT_THROW(Gymmanager::divide(5.0, 0.0), std::invalid_argument);
+    EXPECT_TRUE(result);
 }
 
 /**
